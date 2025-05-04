@@ -17,7 +17,7 @@ const Homepage = () => {
               Explore Therapists
             </button>
           </Link>
-          <Link href="/register">
+          <Link href="/auth/register">
             <button className="px-6 py-3 border border-blue-600 text-blue-600 font-medium rounded-lg hover:bg-blue-50 transition">
               Get Started
             </button>

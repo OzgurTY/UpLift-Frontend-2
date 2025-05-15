@@ -36,7 +36,8 @@ const LoginPage = () => {
 
       localStorage.setItem('token', data.token);
 
-      const userResponse = await fetch('http://localhost:5000/api/users/me', {
+      // Fetch user data
+      const userResponse = await fetch('http://localhost:5001/api/users/me', {
         headers: {
           'Authorization': `Bearer ${data.token}`,
         },

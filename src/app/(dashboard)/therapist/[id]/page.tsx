@@ -1,14 +1,12 @@
-'use client';
-
 import React from 'react';
-import PatientProfile from '@/components/Profiles/PatientProfile';
+import TherapistProfile from '@/components/profiles/TherapistProfile';
 import { useParams } from 'next/navigation';
 
-const PatientProfilePage = () => {
+const TherapistProfilePage = () => {
   const params = useParams();
   const userId = params.id as string;
 
-  return <PatientProfile userId={userId} />;
+  return <TherapistProfile userId={userId} />;
 };
 
-export default PatientProfilePage;
+export default TherapistProfilePage;

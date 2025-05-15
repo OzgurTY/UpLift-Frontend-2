@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
+import { useRouter } from 'next/navigation';
 
 interface PatientData {
   id: string;
@@ -60,6 +61,7 @@ interface ProgressData {
 }
 
 const PatientProfile: React.FC<{ userId: string }> = ({ userId }) => {
+  const router = useRouter();
   const [patient, setPatient] = useState<PatientData | null>(null);
   const [sessions, setSessions] = useState<TherapySession[]>([]);
   const [progressData, setProgressData] = useState<ProgressData | null>(null);
@@ -68,98 +70,106 @@ const PatientProfile: React.FC<{ userId: string }> = ({ userId }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'sessions' | 'progress' | 'documents'>('overview');
   const [isCurrentUser, setIsCurrentUser] = useState(false);
 
+  const handleLogout = () => {
+    // Clear user data from localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    // Redirect to login page
+    router.push('/auth/login');
+  };
+
   useEffect(() => {
-const fetchData = async () => {
-  try {
-    setLoading(true);
-    const token = localStorage.getItem('token');
-    
-    if (!token) {
-      setError('Authentication required');
-      setLoading(false);
-      return;
-    }
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        
+        if (!token) {
+          setError('Authentication required');
+          setLoading(false);
+          return;
+        }
 
-    // Check if viewing own profile
-    const userResponse = await fetch('http://localhost:5001/api/users/me', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    
-    if (userResponse.ok) {
-      const userData = await userResponse.json();
-      setIsCurrentUser(userData.id === userId);
-    }
+        // Check if viewing own profile
+        const userResponse = await fetch('http://localhost:5001/api/users/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          setIsCurrentUser(userData.id === userId);
+        }
 
-    // Fetch patient profile
-    const profileResponse = await fetch(`http://localhost:5001/api/users/${userId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+        // Fetch patient profile
+        const profileResponse = await fetch(`http://localhost:5001/api/users/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
 
-    if (!profileResponse.ok) {
-      throw new Error('Failed to fetch profile data');
-    }
+        if (!profileResponse.ok) {
+          throw new Error('Failed to fetch profile data');
+        }
 
-    const profileData = await profileResponse.json();
-    setPatient(profileData);
+        const profileData = await profileResponse.json();
+        setPatient(profileData);
 
-    // Fetch therapy sessions
-    const appointmentsResponse = await fetch(`http://localhost:5001/api/appointments/my`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+        // Fetch therapy sessions
+        const appointmentsResponse = await fetch(`http://localhost:5001/api/appointments/my`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
 
-    if (!appointmentsResponse.ok) {
-      throw new Error('Failed to fetch appointments');
-    }
+        if (!appointmentsResponse.ok) {
+          throw new Error('Failed to fetch appointments');
+        }
 
-    const appointmentsData = await appointmentsResponse.json();
-    const mappedSessions = appointmentsData.map((appointment: any) => ({
-      id: appointment._id,
-      therapistName: appointment.therapist?.username || 'Unknown Therapist',
-      therapistId: appointment.therapist?._id,
-      date: appointment.slot?.date,
-      time: `${appointment.slot?.startTime} - ${appointment.slot?.endTime}`,
-      type: appointment.slot?.type === 'virtual' ? 'Virtual Session' : 'In-person Session',
-      status: appointment.status === 'booked' ? 'upcoming' : (appointment.status === 'refunded' ? 'cancelled' : 'completed'),
-      notes: ''
-    }));
+        const appointmentsData = await appointmentsResponse.json();
+        const mappedSessions = appointmentsData.map((appointment: any) => ({
+          id: appointment._id,
+          therapistName: appointment.therapist?.username || 'Unknown Therapist',
+          therapistId: appointment.therapist?._id,
+          date: appointment.slot?.date,
+          time: `${appointment.slot?.startTime} - ${appointment.slot?.endTime}`,
+          type: appointment.slot?.type === 'virtual' ? 'Virtual Session' : 'In-person Session',
+          status: appointment.status === 'booked' ? 'upcoming' : (appointment.status === 'refunded' ? 'cancelled' : 'completed'),
+          notes: ''
+        }));
 
-    setSessions(mappedSessions);
+        setSessions(mappedSessions);
 
-    // Fetch progress data
-    const progressResponse = await fetch('http://localhost:5001/api/progress/me', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+        // Fetch progress data
+        const progressResponse = await fetch('http://localhost:5001/api/progress/me', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
 
-    if (!progressResponse.ok) {
-      throw new Error('Failed to fetch progress data');
-    }
+        if (!progressResponse.ok) {
+          throw new Error('Failed to fetch progress data');
+        }
 
-    const progressDataFromAPI = await progressResponse.json();
+        const progressDataFromAPI = await progressResponse.json();
 
-    const formattedProgressData: ProgressData = {
-      wellbeingScores: progressDataFromAPI.wellbeingScores || [],
-      moodTracking: progressDataFromAPI.moods?.map((mood: any) => ({
-        date: mood.date,
-        mood: mood.mood,
-        intensity: mood.intensity,
-      })) || [],
-      goals: (progressDataFromAPI.goals || []).map((goal: any) => ({
-        id: goal._id,
-        description: goal.description,
-        progress: goal.progress,
-        completed: goal.completed,
-      })),
+        const formattedProgressData: ProgressData = {
+          wellbeingScores: progressDataFromAPI.wellbeingScores || [],
+          moodTracking: progressDataFromAPI.moods?.map((mood: any) => ({
+            date: mood.date,
+            mood: mood.mood,
+            intensity: mood.intensity,
+          })) || [],
+          goals: (progressDataFromAPI.goals || []).map((goal: any) => ({
+            id: goal._id,
+            description: goal.description,
+            progress: goal.progress,
+            completed: goal.completed,
+          })),
+        };
+
+        setProgressData(formattedProgressData);
+
+        setLoading(false);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+        setLoading(false);
+      }
     };
-
-    setProgressData(formattedProgressData);
-
-    setLoading(false);
-  } catch (err: unknown) {
-    setError(err instanceof Error ? err.message : 'An error occurred');
-    setLoading(false);
-  }
-};
-
 
     fetchData();
   }, [userId]);
@@ -233,13 +243,22 @@ const fetchData = async () => {
               <div className="flex flex-col md:flex-row md:items-center justify-between mb-2">
                 <h1 className="text-2xl font-bold text-gray-800">{patient.username}</h1>
                 {isCurrentUser && (
-                  <Link 
-                    href="/settings" 
-                    className="inline-flex items-center text-blue-600 text-sm font-medium mt-2 md:mt-0"
-                  >
-                    <Image src="/settings.png" alt="" width={16} height={16} className="mr-1" />
-                    Edit Profile
-                  </Link>
+                  <div className="flex items-center gap-3 mt-2 md:mt-0">
+                    <Link 
+                      href="/settings" 
+                      className="inline-flex items-center text-blue-600 text-sm font-medium"
+                    >
+                      <Image src="/settings.png" alt="" width={16} height={16} className="mr-1" />
+                      Edit Profile
+                    </Link>
+                    <button 
+                      onClick={handleLogout}
+                      className="inline-flex items-center text-red-600 text-sm font-medium bg-red-50 py-1 px-3 rounded-md hover:bg-red-100 transition"
+                    >
+                      <Image src="/logout.png" alt="" width={16} height={16} className="mr-1" />
+                      Logout
+                    </button>
+                  </div>
                 )}
               </div>
               
@@ -674,12 +693,12 @@ const fetchData = async () => {
                   </div>
                   <div className="mt-4">
                     <div className="flex items-center justify-between">
-<p className="text-sm text-gray-500">Current Score</p>
-<p className="text-lg font-semibold text-blue-600">
-  {progressData?.wellbeingScores?.length
-    ? `${progressData.wellbeingScores[progressData.wellbeingScores.length - 1].score}/10`
-    : 'No data'}
-</p>
+                      <p className="text-sm text-gray-500">Current Score</p>
+                      <p className="text-lg font-semibold text-blue-600">
+                        {progressData?.wellbeingScores?.length
+                          ? `${progressData.wellbeingScores[progressData.wellbeingScores.length - 1].score}/10`
+                          : 'No data'}
+                      </p>
                     </div>
                     <div className="flex items-center justify-between mt-2">
                       <p className="text-sm text-gray-500">30-Day Change</p>

@@ -69,116 +69,97 @@ const PatientProfile: React.FC<{ userId: string }> = ({ userId }) => {
   const [isCurrentUser, setIsCurrentUser] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem('token');
-        
-        if (!token) {
-          setError('Authentication required');
-          setLoading(false);
-          return;
-        }
+const fetchData = async () => {
+  try {
+    setLoading(true);
+    const token = localStorage.getItem('token');
+    
+    if (!token) {
+      setError('Authentication required');
+      setLoading(false);
+      return;
+    }
 
-        // Check if viewing own profile
-        const userResponse = await fetch('http://localhost:5001/api/users/me', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          setIsCurrentUser(userData.id === userId);
-        }
+    // Check if viewing own profile
+    const userResponse = await fetch('http://localhost:5001/api/users/me', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    if (userResponse.ok) {
+      const userData = await userResponse.json();
+      setIsCurrentUser(userData.id === userId);
+    }
 
-        // Fetch patient profile data
-        const profileResponse = await fetch(`http://localhost:5001/api/users/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+    // Fetch patient profile
+    const profileResponse = await fetch(`http://localhost:5001/api/users/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-        if (!profileResponse.ok) {
-          throw new Error('Failed to fetch profile data');
-        }
+    if (!profileResponse.ok) {
+      throw new Error('Failed to fetch profile data');
+    }
 
-        const profileData = await profileResponse.json();
-        setPatient(profileData);
+    const profileData = await profileResponse.json();
+    setPatient(profileData);
 
-        // Fetch therapy sessions - in a real app, you'd have an endpoint for this
-        // For now, we'll use mock data
-        const mockSessions: TherapySession[] = [
-          {
-            id: '1',
-            therapistName: 'Dr. Emily Johnson',
-            therapistId: 'th123',
-            date: '2025-05-20',
-            time: '10:00 AM - 11:00 AM',
-            type: 'Virtual Session',
-            status: 'upcoming'
-          },
-          {
-            id: '2',
-            therapistName: 'Dr. Michael Chen',
-            therapistId: 'th456',
-            date: '2025-05-15',
-            time: '2:00 PM - 3:00 PM',
-            type: 'In-person Session',
-            status: 'completed',
-            notes: 'Discussed anxiety management techniques'
-          },
-          {
-            id: '3',
-            therapistName: 'Dr. Emily Johnson',
-            therapistId: 'th123',
-            date: '2025-05-08',
-            time: '10:00 AM - 11:00 AM',
-            type: 'Virtual Session',
-            status: 'completed',
-            notes: 'Follow-up on sleep improvement strategies'
-          },
-          {
-            id: '4',
-            therapistName: 'Dr. Sarah Williams',
-            therapistId: 'th789',
-            date: '2025-04-30',
-            time: '3:30 PM - 4:30 PM',
-            type: 'Virtual Session',
-            status: 'cancelled'
-          }
-        ];
-        setSessions(mockSessions);
+    // Fetch therapy sessions
+    const appointmentsResponse = await fetch(`http://localhost:5001/api/appointments/my`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
-        // Fetch progress data - also using mock data
-        const mockProgressData: ProgressData = {
-          wellbeingScores: [
-            { date: '2025-04-01', score: 6 },
-            { date: '2025-04-08', score: 6.5 },
-            { date: '2025-04-15', score: 7 },
-            { date: '2025-04-22', score: 6.8 },
-            { date: '2025-04-29', score: 7.2 },
-            { date: '2025-05-06', score: 7.5 },
-            { date: '2025-05-13', score: 8 }
-          ],
-          moodTracking: [
-            { date: '2025-05-14', mood: 'Content', intensity: 7 },
-            { date: '2025-05-13', mood: 'Anxious', intensity: 4 },
-            { date: '2025-05-12', mood: 'Happy', intensity: 8 },
-            { date: '2025-05-11', mood: 'Tired', intensity: 5 },
-            { date: '2025-05-10', mood: 'Content', intensity: 7 }
-          ],
-          goals: [
-            { id: 'g1', description: 'Practice daily meditation for 10 minutes', progress: 70, completed: false },
-            { id: 'g2', description: 'Journal before bed 3 times a week', progress: 50, completed: false },
-            { id: 'g3', description: 'Complete anxiety workbook exercises', progress: 100, completed: true },
-            { id: 'g4', description: 'Establish consistent sleep schedule', progress: 60, completed: false }
-          ]
-        };
-        setProgressData(mockProgressData);
+    if (!appointmentsResponse.ok) {
+      throw new Error('Failed to fetch appointments');
+    }
 
-        setLoading(false);
-      } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-        setLoading(false);
-      }
+    const appointmentsData = await appointmentsResponse.json();
+    const mappedSessions = appointmentsData.map((appointment: any) => ({
+      id: appointment._id,
+      therapistName: appointment.therapist?.username || 'Unknown Therapist',
+      therapistId: appointment.therapist?._id,
+      date: appointment.slot?.date,
+      time: `${appointment.slot?.startTime} - ${appointment.slot?.endTime}`,
+      type: appointment.slot?.type === 'virtual' ? 'Virtual Session' : 'In-person Session',
+      status: appointment.status === 'booked' ? 'upcoming' : (appointment.status === 'refunded' ? 'cancelled' : 'completed'),
+      notes: ''
+    }));
+
+    setSessions(mappedSessions);
+
+    // Fetch progress data
+    const progressResponse = await fetch('http://localhost:5001/api/progress/me', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!progressResponse.ok) {
+      throw new Error('Failed to fetch progress data');
+    }
+
+    const progressDataFromAPI = await progressResponse.json();
+
+    const formattedProgressData: ProgressData = {
+      wellbeingScores: progressDataFromAPI.wellbeingScores || [],
+      moodTracking: progressDataFromAPI.moods?.map((mood: any) => ({
+        date: mood.date,
+        mood: mood.mood,
+        intensity: mood.intensity,
+      })) || [],
+      goals: (progressDataFromAPI.goals || []).map((goal: any) => ({
+        id: goal._id,
+        description: goal.description,
+        progress: goal.progress,
+        completed: goal.completed,
+      })),
     };
+
+    setProgressData(formattedProgressData);
+
+    setLoading(false);
+  } catch (err: unknown) {
+    setError(err instanceof Error ? err.message : 'An error occurred');
+    setLoading(false);
+  }
+};
+
 
     fetchData();
   }, [userId]);
@@ -693,10 +674,12 @@ const PatientProfile: React.FC<{ userId: string }> = ({ userId }) => {
                   </div>
                   <div className="mt-4">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm text-gray-500">Current Score</p>
-                      <p className="text-lg font-semibold text-blue-600">
-                        {progressData.wellbeingScores[progressData.wellbeingScores.length - 1].score}/10
-                      </p>
+<p className="text-sm text-gray-500">Current Score</p>
+<p className="text-lg font-semibold text-blue-600">
+  {progressData?.wellbeingScores?.length
+    ? `${progressData.wellbeingScores[progressData.wellbeingScores.length - 1].score}/10`
+    : 'No data'}
+</p>
                     </div>
                     <div className="flex items-center justify-between mt-2">
                       <p className="text-sm text-gray-500">30-Day Change</p>

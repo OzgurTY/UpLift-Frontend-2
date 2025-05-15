@@ -3,6 +3,8 @@
 import Announcements from '@/components/Announcements';
 import BigCalendar from '@/components/BigCalendar';
 import RatingChart from '@/components/RatingChart';
+import MoodForm from '@/components/MoodForm'
+import GoalForm from '@/components/GoalForm'
 import Image from 'next/image';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
@@ -127,6 +129,8 @@ const SinglePatientPage = () => {
           </div>
         </div>
         <RatingChart />
+        <MoodForm />
+        <GoalForm />
         <Announcements />
       </div>
     </div>

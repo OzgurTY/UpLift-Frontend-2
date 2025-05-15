@@ -2,14 +2,16 @@
 
 import React, { useEffect, useState } from 'react';
 import PatientProfile from '@/components/Profiles/PatientProfile';
+import TherapistProfile from '@/components/Profiles/TherapistProfile';
 import { useParams, useRouter } from 'next/navigation';
 
-const PatientProfilePage = () => {
+const ProfilePage = () => {
   const params = useParams();
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -22,9 +24,8 @@ const PatientProfilePage = () => {
           return;
         }
 
-        // API'nin çalışıp çalışmadığını kontrol et
         try {
-          const meResponse = await fetch('http://localhost:5001/api/users/me', {
+          const meResponse = await fetch('http://localhost:5000/api/users/me', {
             headers: {
               'Authorization': `Bearer ${token}`
             }
@@ -38,9 +39,10 @@ const PatientProfilePage = () => {
           const userData = await meResponse.json();
           console.log('User data:', userData);
           
-          // Kullanıcı ID'sini al (ya parametre ID'sini ya da kendi ID'sini kullan)
+          // Kullanıcı ID'sini ve rolünü al
           const id = params.id || userData.id;
           setUserId(id);
+          setUserRole(userData.role);
         } catch (error) {
           console.error('API connection error:', error);
           setError('API connection failed. Please check if the server is running.');
@@ -67,7 +69,7 @@ const PatientProfilePage = () => {
     );
   }
 
-  if (error || !userId) {
+  if (error || !userId || !userRole) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="max-w-md text-center">
@@ -75,7 +77,13 @@ const PatientProfilePage = () => {
           <h1 className="text-2xl font-bold text-gray-800 mb-2">Profile Unavailable</h1>
           <p className="text-gray-600 mb-6">{error || 'Failed to fetch profile data'}</p>
           <button 
-            onClick={() => router.push('/patient')}
+            onClick={() => {
+              if (userRole === 'therapist') {
+                router.push('/therapist');
+              } else {
+                router.push('/patient');
+              }
+            }}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
             Return to Dashboard
@@ -85,7 +93,12 @@ const PatientProfilePage = () => {
     );
   }
 
-  return <PatientProfile userId={userId} />;
+  // Kullanıcı rolüne göre uygun profil bileşenini render et
+  if (userRole === 'therapist') {
+    return <TherapistProfile userId={userId} />;
+  } else {
+    return <PatientProfile userId={userId} />;
+  }
 };
 
-export default PatientProfilePage;
+export default ProfilePage;

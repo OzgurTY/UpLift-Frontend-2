@@ -30,7 +30,7 @@ const TherapistDetailPage = () => {
       try {
         if (!id) return;
 
-        const res = await fetch(`http://localhost:5001/api/therapists/${id}`);
+        const res = await fetch(`http://localhost:5000/api/therapists/${id}`);
         if (!res.ok) throw new Error('Failed to fetch therapist');
         const data = await res.json();
         setTherapist(data);

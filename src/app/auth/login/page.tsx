@@ -18,7 +18,7 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5001/api/auth/login', {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -36,7 +36,7 @@ const LoginPage = () => {
       localStorage.setItem('token', data.token);
 
       // Fetch user data
-      const userResponse = await fetch('http://localhost:5001/api/users/me', {
+      const userResponse = await fetch('http://localhost:5000/api/users/me', {
         headers: {
           'Authorization': `Bearer ${data.token}`,
         },

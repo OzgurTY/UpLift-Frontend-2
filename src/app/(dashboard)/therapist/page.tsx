@@ -31,7 +31,7 @@ const TherapistPage = () => {
         const token = localStorage.getItem('token');
         if (!token) return;
 
-        const res = await fetch('http://localhost:5001/api/users/me', {
+        const res = await fetch('http://localhost:5000/api/users/me', {
           headers: {
             Authorization: `Bearer ${token}`,
           },

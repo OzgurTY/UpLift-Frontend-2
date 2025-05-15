@@ -92,7 +92,7 @@ const PatientProfile: React.FC<{ userId: string }> = ({ userId }) => {
         }
 
         // Check if viewing own profile
-        const userResponse = await fetch('http://localhost:5001/api/users/me', {
+        const userResponse = await fetch('http://localhost:5000/api/users/me', {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -102,7 +102,7 @@ const PatientProfile: React.FC<{ userId: string }> = ({ userId }) => {
         }
 
         // Fetch patient profile
-        const profileResponse = await fetch(`http://localhost:5001/api/users/${userId}`, {
+        const profileResponse = await fetch(`http://localhost:5000/api/users/${userId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -114,7 +114,7 @@ const PatientProfile: React.FC<{ userId: string }> = ({ userId }) => {
         setPatient(profileData);
 
         // Fetch therapy sessions
-        const appointmentsResponse = await fetch(`http://localhost:5001/api/appointments/my`, {
+        const appointmentsResponse = await fetch(`http://localhost:5000/api/appointments/my`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -137,7 +137,7 @@ const PatientProfile: React.FC<{ userId: string }> = ({ userId }) => {
         setSessions(mappedSessions);
 
         // Fetch progress data
-        const progressResponse = await fetch('http://localhost:5001/api/progress/me', {
+        const progressResponse = await fetch('http://localhost:5000/api/progress/me', {
           headers: { Authorization: `Bearer ${token}` }
         });
 

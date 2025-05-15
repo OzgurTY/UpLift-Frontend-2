@@ -56,7 +56,7 @@ const Menu = () => {
         {
           icon: '/calendar.png',
           label: 'Calendar',
-          href: '/list/events',
+          href: '/calendar',
           visible: ['admin', 'therapist', 'patient'],
         },
         {

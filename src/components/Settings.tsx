@@ -93,7 +93,7 @@ const Settings = () => {
           return;
         }
 
-        const response = await fetch('http://localhost:5000/api/users/me', {
+        const response = await fetch('http://localhost:5001/api/users/me', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -165,7 +165,7 @@ const Settings = () => {
         phone: formData.phone
       };
 
-      const response = await fetch('http://localhost:5000/api/users/update-profile', {
+      const response = await fetch('http://localhost:5001/api/users/update-profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -199,7 +199,7 @@ const Settings = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/users/change-password', {
+      const response = await fetch('http://localhost:5001/api/users/change-password', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

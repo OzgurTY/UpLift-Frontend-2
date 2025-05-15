@@ -20,7 +20,7 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch('http://localhost:5001/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -72,7 +72,7 @@ const handleGoogleSuccess = async (credentialResponse: any) => {
   try {
     const credential = credentialResponse.credential;
 
-    const response = await fetch('http://localhost:5000/api/auth/google-login', {
+    const response = await fetch('http://localhost:5001/api/auth/google-login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

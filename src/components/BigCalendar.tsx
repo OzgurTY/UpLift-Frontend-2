@@ -18,7 +18,7 @@ const BigCalendar = ({ therapistId }: { therapistId: string }) => {
       try {
         if (!therapistId) return;
 
-        const res = await fetch(`http://localhost:5000/api/slot/therapist/${therapistId}`);
+        const res = await fetch(`http://localhost:5001/api/slot/therapist/${therapistId}`);
         const data = await res.json();
 
         if (!Array.isArray(data)) throw new Error('Data is not an array');

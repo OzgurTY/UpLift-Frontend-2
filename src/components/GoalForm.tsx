@@ -21,7 +21,7 @@ const GoalsSection = () => {
   const fetchGoals = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5001/api/progress', {
+      const res = await fetch('http://localhost:5000/api/progress', {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -34,7 +34,7 @@ const GoalsSection = () => {
   const updateGoalProgress = async (goalId: string, newProgress: number) => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`http://localhost:5001/api/progress/goal/${goalId}`, {
+      await fetch(`http://localhost:5000/api/progress/goal/${goalId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ progressValue: newProgress }),

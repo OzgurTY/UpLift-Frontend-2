@@ -105,7 +105,7 @@ const TherapistProfile: React.FC<{ userId: string }> = ({ userId }) => {
         }
 
         // Check if viewing own profile
-        const userResponse = await fetch('http://localhost:5001/api/users/me', {
+        const userResponse = await fetch('http://localhost:5000/api/users/me', {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -115,7 +115,7 @@ const TherapistProfile: React.FC<{ userId: string }> = ({ userId }) => {
         }
 
         // Fetch therapist profile data
-        const profileResponse = await fetch(`http://localhost:5001/api/therapists/${userId}`, {
+        const profileResponse = await fetch(`http://localhost:5000/api/therapists/${userId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 

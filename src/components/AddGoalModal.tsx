@@ -9,7 +9,7 @@ const AddGoalModal = ({ onClose }: { onClose: () => void }) => {
   const handleAddGoal = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5001/api/progress/goal', {
+      const res = await fetch('http://localhost:5000/api/progress/goal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ description }),

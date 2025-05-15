@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { GoogleLogin } from '@react-oauth/google';
+import { jwtDecode } from 'jwt-decode';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -18,7 +20,7 @@ const LoginPage = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5001/api/auth/login', {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -32,11 +34,9 @@ const LoginPage = () => {
         throw new Error(data.message || 'Login failed');
       }
 
-      // Store token
       localStorage.setItem('token', data.token);
 
-      // Fetch user data
-      const userResponse = await fetch('http://localhost:5001/api/users/me', {
+      const userResponse = await fetch('http://localhost:5000/api/users/me', {
         headers: {
           'Authorization': `Bearer ${data.token}`,
         },
@@ -49,7 +49,6 @@ const LoginPage = () => {
       const userData = await userResponse.json();
       localStorage.setItem('user', JSON.stringify(userData));
 
-      // Redirect based on role
       if (userData.role === 'patient') {
         router.push(`/patient/${userData.id}`);
       } else if (userData.role === 'therapist') {
@@ -67,6 +66,47 @@ const LoginPage = () => {
     }
   };
 
+  // Google login success
+const handleGoogleSuccess = async (credentialResponse: any) => {
+  try {
+    const credential = credentialResponse.credential;
+
+    const response = await fetch('http://localhost:5000/api/auth/google-login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ credential }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Google login failed');
+    }
+
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+
+    const userData = data.user;
+
+    if (userData.role === 'patient') {
+      router.push(`/patient/${userData.id}`);
+    } else if (userData.role === 'therapist') {
+      router.push(`/therapist`);
+    } else {
+      throw new Error('Rol bilgisi eksik veya geçersiz.');
+    }
+  } catch (err: any) {
+    console.error('Google Login error:', err);
+    setError(err.message || 'Google login failed');
+  }
+};
+
+  const handleGoogleError = () => {
+    setError('Google login failed. Please try again.');
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-white px-4">
       <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-lg">
@@ -77,13 +117,13 @@ const LoginPage = () => {
           <h2 className="text-3xl font-bold text-gray-800 mt-6">Welcome Back</h2>
           <p className="text-gray-600 mt-2">Sign in to your account</p>
         </div>
-        
+
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md">
             {error}
           </div>
         )}
-        
+
         <form className="space-y-6" onSubmit={handleLogin}>
           <div>
             <label className="block mb-2 text-sm text-gray-600">Email Address</label>
@@ -107,30 +147,10 @@ const LoginPage = () => {
               required
             />
           </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-blue-600 border-gray-300 rounded"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-600">
-                Remember me
-              </label>
-            </div>
-            <div className="text-sm">
-              <Link href="/auth/forgot-password" className="text-blue-600 hover:underline">
-                Forgot password?
-              </Link>
-            </div>
-          </div>
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-3 ${
-              loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
-            } text-white rounded-lg transition flex items-center justify-center`}
+            className={`w-full py-3 ${loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded-lg transition flex items-center justify-center`}
           >
             {loading ? (
               <>
@@ -145,12 +165,22 @@ const LoginPage = () => {
             )}
           </button>
         </form>
+
+        {/* Google Login */}
+        <div className="mt-6 text-center">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+          />
+        </div>
+
         <p className="mt-6 text-center text-gray-600 text-sm">
           Don't have an account?{' '}
           <Link href="/auth/register" className="text-blue-600 hover:underline">
             Register
           </Link>
         </p>
+
         <div className="mt-6 text-center">
           <Link href="/">
             <span className="text-blue-600 hover:underline flex items-center justify-center">

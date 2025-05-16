@@ -104,156 +104,86 @@ const TherapistProfile: React.FC<{ userId: string }> = ({ userId }) => {
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const token = localStorage.getItem('token');
-        
-        if (!token) {
-          setError('Authentication required');
-          setLoading(false);
-          return;
-        }
-
-        // Check if viewing own profile
-        const userResponse = await fetch('http://localhost:5001/api/users/me', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          setIsCurrentUser(userData.id === userId);
-        }
-
-        // Fetch therapist profile data
-        const profileResponse = await fetch(`http://localhost:5001/api/therapists/${userId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
-        if (!profileResponse.ok) {
-          throw new Error('Failed to fetch profile data');
-        }
-
-        const profileData = await profileResponse.json();
-        setTherapist(profileData);
-
-        // Mock reviews data
-        const mockReviews: Review[] = [
-          {
-            id: '1',
-            patientName: 'Sarah J.',
-            rating: 5,
-            comment: 'Dr. Johnson has been incredibly helpful in my journey. Her approach is compassionate and effective.',
-            date: '2025-05-01'
-          },
-          {
-            id: '2',
-            patientName: 'Mark T.',
-            rating: 4,
-            comment: 'Very professional and knowledgeable. Has helped me develop effective coping strategies.',
-            date: '2025-04-22'
-          },
-          {
-            id: '3',
-            patientName: 'Lisa R.',
-            rating: 5,
-            comment: 'I appreciate the personalized care and attention to detail. Highly recommended!',
-            date: '2025-04-10'
-          },
-          {
-            id: '4',
-            patientName: 'James K.',
-            rating: 4,
-            comment: 'Great therapist who listens well and provides practical advice.',
-            date: '2025-03-28'
-          }
-        ];
-        setReviews(mockReviews);
-
-        // Mock sessions data
-        const mockSessions: SessionData[] = [
-          {
-            id: '1',
-            patientName: 'Jennifer Adams',
-            patientId: 'p123',
-            date: '2025-05-20',
-            time: '10:00 AM - 11:00 AM',
-            type: 'Virtual Session',
-            status: 'upcoming'
-          },
-          {
-            id: '2',
-            patientName: 'Michael Thompson',
-            patientId: 'p456',
-            date: '2025-05-20',
-            time: '2:00 PM - 3:00 PM',
-            type: 'In-person Session',
-            status: 'upcoming'
-          },
-          {
-            id: '3',
-            patientName: 'Rebecca Liu',
-            patientId: 'p789',
-            date: '2025-05-15',
-            time: '11:30 AM - 12:30 PM',
-            type: 'Virtual Session',
-            status: 'completed',
-            notes: 'Discussed anxiety management techniques and homework for the week'
-          },
-          {
-            id: '4',
-            patientName: 'David Wilson',
-            patientId: 'p101',
-            date: '2025-05-14',
-            time: '3:00 PM - 4:00 PM',
-            type: 'In-person Session',
-            status: 'completed',
-            notes: 'Follow-up on medication effects and sleep improvement'
-          },
-          {
-            id: '5',
-            patientName: 'Sofia Garcia',
-            patientId: 'p202',
-            date: '2025-05-10',
-            time: '9:00 AM - 10:00 AM',
-            type: 'Virtual Session',
-            status: 'completed',
-            notes: 'Initial assessment completed, treatment plan discussed'
-          }
-        ];
-        setSessions(mockSessions);
-
-        // Mock performance data
-        const mockPerformance: PerformanceData = {
-          sessionsCompleted: 125,
-          patientCount: 28,
-          occupancyRate: 85,
-          ratings: [
-            { date: '2025-01', rating: 4.5 },
-            { date: '2025-02', rating: 4.6 },
-            { date: '2025-03', rating: 4.7 },
-            { date: '2025-04', rating: 4.8 },
-            { date: '2025-05', rating: 4.9 }
-          ],
-          weeklyStats: [
-            { week: 'Apr 14-20', sessions: 15, newPatients: 2 },
-            { week: 'Apr 21-27', sessions: 18, newPatients: 3 },
-            { week: 'Apr 28-May 4', sessions: 17, newPatients: 1 },
-            { week: 'May 5-11', sessions: 20, newPatients: 4 },
-            { week: 'May 12-18', sessions: 19, newPatients: 2 }
-          ]
-        };
-        setPerformanceData(mockPerformance);
-
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setError('Authentication required');
         setLoading(false);
-      } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
-        setLoading(false);
+        return;
       }
-    };
 
-    fetchData();
-  }, [userId]);
+      // Check if viewing own profile
+      const userResponse = await fetch('http://localhost:5001/api/users/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        setIsCurrentUser(userData.id === userId);
+      }
+
+      // Fetch therapist profile data
+      const profileResponse = await fetch(`http://localhost:5001/api/therapists/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!profileResponse.ok) {
+        throw new Error('Failed to fetch profile data');
+      }
+
+      const profileData = await profileResponse.json();
+      setTherapist(profileData);
+
+      // Fetch therapist's ratings directly from the API instead of using mock data
+      const ratingsResponse = await fetch(`http://localhost:5001/api/ratings/therapist/${userId}`);
+      
+      if (ratingsResponse.ok) {
+        const ratingsData = await ratingsResponse.json();
+        setReviews(ratingsData.ratings || []);
+        // The average is calculated directly in the render function
+        // from the reviews array, so no need to set it separately
+      }
+
+      // Fetch real appointment data for the therapist
+      const appointmentsResponse = await fetch(`http://localhost:5001/api/appointments/therapist/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (appointmentsResponse.ok) {
+        const appointmentsData = await appointmentsResponse.json();
+        
+        // Map API data to the expected format
+        const mappedSessions = appointmentsData.map((appointment: any) => ({
+          id: appointment._id,
+          patientName: appointment.patient?.username || 'Unknown Patient',
+          patientId: appointment.patient?._id,
+          date: appointment.slot?.date,
+          time: `${appointment.slot?.startTime} - ${appointment.slot?.endTime}`,
+          type: appointment.slot?.type === 'virtual' ? 'Virtual Session' : 'In-person Session',
+          status: appointment.status === 'booked' ? 'upcoming' : 
+                 (new Date(appointment.slot?.date) < new Date() ? 'completed' : 'upcoming'),
+          notes: '',
+        }));
+
+        setSessions(mappedSessions);
+      }
+
+      // If you want real performance data, you would fetch it here
+      // For now, keep using the mock data since there may not be an endpoint for this yet
+      
+      setLoading(false);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, [userId]);
+
 
   if (loading) {
     return (

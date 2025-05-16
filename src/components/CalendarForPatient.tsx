@@ -9,7 +9,7 @@ import AppointmentDetailModal from './AppointmentDetailModal';
 
 const localizer = momentLocalizer(moment);
 
-const CalendarForPatient = ({ therapistId }) => {
+const CalendarForPatient = ({ therapistId }: { therapistId: string }) => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [date, setDate] = useState(new Date());
@@ -19,8 +19,11 @@ const CalendarForPatient = ({ therapistId }) => {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-  const parseDateTime = (dateField, time) => {
-    const dateStr = typeof dateField === 'string' ? dateField.split('T')[0] : dateField.toISOString().split('T')[0];
+  const parseDateTime = (dateField: string | Date, time: string) => {
+    const dateStr =
+      typeof dateField === 'string'
+        ? dateField.split('T')[0]
+        : dateField.toISOString().split('T')[0];
     return new Date(`${dateStr}T${time}:00`);
   };
 
@@ -47,7 +50,7 @@ const CalendarForPatient = ({ therapistId }) => {
     checkUserRole();
   }, [therapistId]);
 
-  const fetchEvents = async (role, token) => {
+  const fetchEvents = async (role: string, token: string) => {
     try {
       setLoading(true);
       let data = [];
@@ -57,18 +60,18 @@ const CalendarForPatient = ({ therapistId }) => {
         if (!res.ok) throw new Error('Failed to fetch slots');
         const slots = await res.json();
 
-        data = slots.map((slot) => ({
+        data = slots.map((slot: any) => ({
           id: slot._id,
           title: slot.status === 'booked' ? 'Booked Appointment' : 'Available Slot',
           start: parseDateTime(slot.date, slot.startTime),
           end: parseDateTime(slot.date, slot.endTime),
           status: slot.status,
-          slotInfo: {
+          slot: {
             ...slot.slotInfo,
             date: slot.date,
             startTime: slot.startTime,
             endTime: slot.endTime,
-            type: slot.slotInfo?.type || 'in-person',
+            type: slot.slotInfo?.type || 'in_person',
           },
           jitsiRoom: slot.jitsiRoom,
         }));
@@ -79,18 +82,18 @@ const CalendarForPatient = ({ therapistId }) => {
         if (!res.ok) throw new Error('Failed to fetch appointments');
         const appointments = await res.json();
 
-        data = appointments.map((appt) => ({
+        data = appointments.map((appt: any) => ({
           id: appt._id,
           title: 'My Appointment',
           start: parseDateTime(appt.slot.date, appt.slot.startTime),
           end: parseDateTime(appt.slot.date, appt.slot.endTime),
           status: appt.status,
-          slotInfo: {
+          slot: {
             ...appt.slot,
             date: appt.slot.date,
             startTime: appt.slot.startTime,
             endTime: appt.slot.endTime,
-            type: appt.slot.type || 'in-person',
+            type: appt.slot.type || 'in_person',
           },
           jitsiRoom: appt.jitsiRoom,
           therapist: appt.therapist,
@@ -106,7 +109,7 @@ const CalendarForPatient = ({ therapistId }) => {
     }
   };
 
-  const eventStyleGetter = (event) => {
+  const eventStyleGetter = (event: any) => {
     let style = {
       backgroundColor: event.status === 'available' ? '#C3EBFA' : '#CFCEFF',
       borderRadius: '4px',
@@ -120,7 +123,7 @@ const CalendarForPatient = ({ therapistId }) => {
     return { style };
   };
 
-  const handleEventClick = (event) => {
+  const handleEventClick = (event: any) => {
     if (event.status === 'available' && !isTherapist) {
       setSelectedSlot(event);
       setShowBookingModal(true);
@@ -130,7 +133,8 @@ const CalendarForPatient = ({ therapistId }) => {
     }
   };
 
-  if (loading) return <div className="flex items-center justify-center h-full">Loading calendar...</div>;
+  if (loading)
+    return <div className="flex items-center justify-center h-full">Loading calendar...</div>;
 
   return (
     <div className="h-full w-full">

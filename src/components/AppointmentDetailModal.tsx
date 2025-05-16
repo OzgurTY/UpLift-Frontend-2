@@ -2,17 +2,49 @@
 
 import React from 'react';
 
-const AppointmentDetailModal = ({ isOpen, onClose, appointment }) => {
+type Appointment = {
+  _id?: string;
+  id?: string;
+  therapist?: {
+    username?: string;
+  };
+  patient?: {
+    username?: string;
+  };
+  status?: string;
+  jitsiRoom?: string;
+  slot?: {
+    date?: string;
+    startTime?: string;
+    endTime?: string;
+    type?: 'virtual' | 'in_person';
+  };
+};
+
+type Props = {
+  isOpen: boolean;
+  onClose: () => void;
+  appointment: Appointment | null;
+};
+
+const AppointmentDetailModal: React.FC<Props> = ({ isOpen, onClose, appointment }) => {
   if (!isOpen || !appointment) return null;
 
-  const { therapist, patient, status, jitsiRoom, slotInfo } = appointment;
-  const { date, startTime, endTime, type } = slotInfo || {};
+  const {
+    therapist,
+    patient,
+    status,
+    jitsiRoom,
+    slot: slotInfo = {},
+  } = appointment;
 
-  // Tarih ve saatleri kontrol et
+  const { date, startTime, endTime, type } = slotInfo;
+
   const hasValidDate = date && startTime && endTime;
 
-  let sessionStart = null;
-  let sessionEnd = null;
+  let sessionStart: Date | null = null;
+  let sessionEnd: Date | null = null;
+
   if (hasValidDate) {
     const isoDate = typeof date === 'string' ? date.split('T')[0] : '';
     sessionStart = new Date(`${isoDate}T${startTime}:00`);
@@ -21,17 +53,32 @@ const AppointmentDetailModal = ({ isOpen, onClose, appointment }) => {
 
   const now = new Date();
 
-  const canAttend =
-    type === 'virtual' &&
+  const isJoinTimeValid =
     sessionStart &&
     sessionEnd &&
     now >= new Date(sessionStart.getTime() - 5 * 60 * 1000) &&
     now <= sessionEnd;
 
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string | undefined) => {
     if (!dateString) return '-';
     const d = new Date(dateString);
     return d.toLocaleDateString('en-GB');
+  };
+
+  const handleJoin = () => {
+    const appointmentId = appointment._id || appointment.id;
+
+    if (!appointmentId) {
+      alert('Appointment ID not found.');
+      return;
+    }
+
+    if (!isJoinTimeValid) {
+      alert('You can only join 5 minutes before the session and until it ends.');
+      return;
+    }
+
+    window.open(`https://meet.jit.si/uplift_${appointmentId}`, '_blank');
   };
 
   return (
@@ -44,25 +91,20 @@ const AppointmentDetailModal = ({ isOpen, onClose, appointment }) => {
           <p><strong>Date:</strong> {date ? formatDate(date) : '-'}</p>
           <p><strong>Time:</strong> {startTime && endTime ? `${startTime} - ${endTime}` : '- - -'}</p>
           <p><strong>Type:</strong> {type || '-'}</p>
-          <p><strong>Status:</strong> {status}</p>
+          <p><strong>Status:</strong> {status || '-'}</p>
         </div>
 
         {type === 'virtual' && (
-          <a
-            href={canAttend ? jitsiRoom : '#'}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`block mt-6 text-center py-2 rounded-md font-medium ${
-              canAttend
-                ? 'bg-green-500 text-white hover:bg-green-600'
+          <button
+            onClick={handleJoin}
+            className={`block w-full mt-6 text-center py-2 rounded-md font-medium ${
+              isJoinTimeValid
+                ? 'bg-green-600 text-white hover:bg-green-700'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
-            onClick={(e) => {
-              if (!canAttend) e.preventDefault();
-            }}
           >
             Attend Appointment
-          </a>
+          </button>
         )}
 
         <button

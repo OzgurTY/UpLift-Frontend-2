@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import AppointmentRatingModal from './AppointmentRatingModal';
 
 type Appointment = {
   _id?: string;
@@ -28,6 +29,8 @@ type Props = {
 };
 
 const AppointmentDetailModal: React.FC<Props> = ({ isOpen, onClose, appointment }) => {
+  const [showRatingModal, setShowRatingModal] = useState(false);
+
   if (!isOpen || !appointment) return null;
 
   const {
@@ -59,6 +62,10 @@ const AppointmentDetailModal: React.FC<Props> = ({ isOpen, onClose, appointment 
     now >= new Date(sessionStart.getTime() - 5 * 60 * 1000) &&
     now <= sessionEnd;
 
+  const isSessionCompleted = 
+    sessionEnd && 
+    now > sessionEnd;
+
   const formatDate = (dateString: string | undefined) => {
     if (!dateString) return '-';
     const d = new Date(dateString);
@@ -81,40 +88,60 @@ const AppointmentDetailModal: React.FC<Props> = ({ isOpen, onClose, appointment 
     window.open(`https://meet.jit.si/uplift_${appointmentId}`, '_blank');
   };
 
+  const handleRateSession = () => {
+    setShowRatingModal(true);
+  };
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
-      <div className="bg-white rounded-md p-6 w-[90%] max-w-md shadow-lg">
-        <h2 className="text-lg font-semibold mb-4">Appointment Details</h2>
-        <div className="space-y-2">
-          <p><strong>Therapist:</strong> {therapist?.username || '-'}</p>
-          <p><strong>Patient:</strong> {patient?.username || '-'}</p>
-          <p><strong>Date:</strong> {date ? formatDate(date) : '-'}</p>
-          <p><strong>Time:</strong> {startTime && endTime ? `${startTime} - ${endTime}` : '- - -'}</p>
-          <p><strong>Type:</strong> {type || '-'}</p>
-          <p><strong>Status:</strong> {status || '-'}</p>
+    <>
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+        <div className="bg-white rounded-md p-6 w-[90%] max-w-md shadow-lg">
+          <h2 className="text-lg font-semibold mb-4">Appointment Details</h2>
+          <div className="space-y-2">
+            <p><strong>Therapist:</strong> {therapist?.username || '-'}</p>
+            <p><strong>Patient:</strong> {patient?.username || '-'}</p>
+            <p><strong>Date:</strong> {date ? formatDate(date) : '-'}</p>
+            <p><strong>Time:</strong> {startTime && endTime ? `${startTime} - ${endTime}` : '- - -'}</p>
+            <p><strong>Type:</strong> {type || '-'}</p>
+            <p><strong>Status:</strong> {status || '-'}</p>
+          </div>
+
+          <div className="mt-6 space-y-3">
+            {type === 'virtual' && isJoinTimeValid && (
+              <button
+                onClick={handleJoin}
+                className="block w-full py-2 rounded-md font-medium bg-green-600 text-white hover:bg-green-700"
+              >
+                Attend Appointment
+              </button>
+            )}
+
+            {isSessionCompleted && (
+              <button
+                onClick={handleRateSession}
+                className="block w-full py-2 rounded-md font-medium bg-blue-600 text-white hover:bg-blue-700"
+              >
+                Rate This Session
+              </button>
+            )}
+
+            <button
+              onClick={onClose}
+              className="w-full py-2 rounded-md border text-center font-medium"
+            >
+              Close
+            </button>
+          </div>
         </div>
-
-        {type === 'virtual' && (
-          <button
-            onClick={handleJoin}
-            className={`block w-full mt-6 text-center py-2 rounded-md font-medium ${
-              isJoinTimeValid
-                ? 'bg-green-600 text-white hover:bg-green-700'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            Attend Appointment
-          </button>
-        )}
-
-        <button
-          onClick={onClose}
-          className="mt-3 w-full py-2 rounded-md border text-center font-medium"
-        >
-          Close
-        </button>
       </div>
-    </div>
+
+      {/* Rating Modal */}
+      <AppointmentRatingModal
+        isOpen={showRatingModal}
+        onClose={() => setShowRatingModal(false)}
+        appointment={appointment}
+      />
+    </>
   );
 };
 

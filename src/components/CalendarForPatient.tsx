@@ -1,6 +1,6 @@
 'use client';
 
-import { Calendar, momentLocalizer } from 'react-big-calendar';
+import { Calendar, momentLocalizer, View } from 'react-big-calendar';
 import moment from 'moment';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { useEffect, useState } from 'react';
@@ -13,7 +13,7 @@ const CalendarForPatient = ({ therapistId }: { therapistId: string }) => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [date, setDate] = useState(new Date());
-  const [view, setView] = useState('week');
+  const [view, setView] = useState<View>('week');
   const [isTherapist, setIsTherapist] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [showBookingModal, setShowBookingModal] = useState(false);

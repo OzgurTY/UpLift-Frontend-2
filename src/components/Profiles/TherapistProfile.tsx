@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { useRouter } from 'next/navigation';
 
 interface TherapistData {
   id: string;
@@ -83,6 +84,7 @@ interface PerformanceData {
 }
 
 const TherapistProfile: React.FC<{ userId: string }> = ({ userId }) => {
+  const router = useRouter();
   const [therapist, setTherapist] = useState<TherapistData | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [sessions, setSessions] = useState<SessionData[]>([]);
@@ -90,7 +92,16 @@ const TherapistProfile: React.FC<{ userId: string }> = ({ userId }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'overview' | 'sessions' | 'performance' | 'documents'>('overview');
+
   const [isCurrentUser, setIsCurrentUser] = useState(false);
+  const handleLogout = () => {
+    // Clear user data from localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    // Redirect to login page
+    router.push('/auth/login');
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -335,13 +346,22 @@ const TherapistProfile: React.FC<{ userId: string }> = ({ userId }) => {
                   </div>
                 </div>
                 {isCurrentUser && (
-                  <Link 
-                    href="/settings" 
-                    className="inline-flex items-center text-blue-600 text-sm font-medium mt-2 md:mt-0"
-                  >
+                  <div>
+                    <Link 
+                      href="/settings" 
+                      className="inline-flex items-center text-blue-600 text-sm font-medium mt-2 md:mt-0"
+                    >
                     <Image src="/settings.png" alt="" width={16} height={16} className="mr-1" />
-                    Edit Profile
-                  </Link>
+                      Edit Profile
+                    </Link>
+                    <button 
+                      onClick={handleLogout}
+                      className="inline-flex items-center text-red-600 text-sm font-medium bg-red-50 py-1 px-3 rounded-md hover:bg-red-100 transition"
+                    >
+                    <Image src="/logout.png" alt="" width={16} height={16} className="mr-1" />
+                      Logout
+                    </button>
+                  </div>
                 )}
               </div>
               

@@ -10,7 +10,7 @@ import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 
 interface UserData {
-  name: string;
+  username: string;
   email: string;
   bloodType?: string;
   joinedAt?: string;
@@ -20,23 +20,24 @@ interface UserData {
 const SinglePatientPage = () => {
   const [user, setUser] = useState<UserData | null>(null);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) return;
+useEffect(() => {
+  const fetchUser = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
 
-      const res = await fetch('http://localhost:5001/api/users/me', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    const res = await fetch('http://localhost:5001/api/users/me', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-      const data = await res.json();
-      if (res.ok) setUser(data);
-    };
+    const data = await res.json();
+    console.log("Fetched user data:", data); // 👈 Bu satırı geçici olarak ekle
 
-    fetchUser();
-  }, []);
+    if (res.ok) setUser(data);
+  };
+
+  fetchUser();
+}, []);
+
 
   return (
     <div className='flex-1 p-4 flex flex-col gap-4 xl:flex-row'>
@@ -57,7 +58,7 @@ const SinglePatientPage = () => {
             </div>
             <div className='w-2/3 flex flex-col justify-between gap-4'>
               <h1 className='text-xl font-semibold'>
-                {user?.name || 'Loading...'}
+                {user?.username || 'Loading...'}
               </h1>
               <p className='text-sm text-gray-500'>
                 Bu kullanıcı hakkında açıklama henüz yok.

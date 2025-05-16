@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 
 interface User {
-  name: string;
+  username: string;
   role: string;
 }
 
@@ -70,7 +70,7 @@ const Navbar = () => {
             <span>{error}</span>
           ) : (
             <>
-              <span className="text-xs leading-3 font-medium">{user?.name}</span>
+              <span className="text-xs leading-3 font-medium">{user?.username}</span>
               <span className="text-[10px] text-gray-500 text-right">{user?.role}</span>
             </>
           )}

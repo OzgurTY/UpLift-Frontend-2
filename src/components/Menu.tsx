@@ -88,12 +88,6 @@ const Menu = () => {
           href: '/settings',
           visible: ['admin', 'patient', 'therapist'],
         },
-        {
-          icon: '/logout.png',
-          label: 'Logout',
-          href: '/logout',
-          visible: ['admin', 'patient', 'therapist'],
-        },
       ],
     },
   ];

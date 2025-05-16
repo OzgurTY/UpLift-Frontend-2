@@ -162,30 +162,29 @@ export default function MessagesPage() {
           }, 100);
         })
         .catch(console.error);
-    }
-
-    const handleNewMessage = (message: Message) => {
+    }    const handleNewMessage = (message: Message) => {
       console.log('New message received:', message);
       
       setMsgs(prev => {
-        // Check for duplicates
-        if (prev.some(m => m._id === message._id)) {
-          return prev;
-        }
-
-        // Update temp message if exists
-        const tempIndex = prev.findIndex(m => 
-          m.text === message.text && 
-          (typeof m.sender === 'string' ? m.sender === message.sender : m.sender._id === message.sender) && 
-          m.status === 'sending'
+        // Check for duplicates by message ID or temp ID match
+        const existingMessage = prev.find(m => 
+          m._id === message._id || 
+          (m.status === 'sending' && m.text === message.text &&
+           (typeof m.sender === 'string' ? 
+             m.sender === message.sender : 
+             m.sender._id === message.sender))
         );
-        
-        if (tempIndex >= 0) {
-          const newMsgs = [...prev];
-          newMsgs[tempIndex] = { ...message, status: 'delivered' as const };
-          return newMsgs;
+
+        if (existingMessage) {
+          // Update status of existing message
+          return prev.map(m => 
+            m === existingMessage ? 
+              { ...message, status: 'delivered' as const } : 
+              m
+          );
         }
 
+        // Add new message
         const newMsg = { ...message, status: 'delivered' as const };
         
         // Send received confirmation for messages from others
@@ -324,35 +323,13 @@ export default function MessagesPage() {
     };
 
     setMsgs(prev => [...prev, tempMessage]);
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-
-    try {
-      // Emit to socket first for immediate delivery
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });    try {
+      // Only emit to socket for delivery - backend will handle persistence
       currentSocket.emit('send-message', {
         conversationId: sel._id,
         text: messageText,
         tempId
       });
-
-      // Save to database
-      const response = await fetch(`${API}/api/chat/${sel._id}/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ text: messageText })
-      });
-
-      if (!response.ok) throw new Error('Failed to send message');
-
-      const savedMessage: Message = await response.json();
-      console.log('Message saved:', savedMessage);
-
-      // Update temp message with saved data
-      setMsgs(prev => prev.map(m => 
-        m._id === tempId ? { ...savedMessage, status: 'sent' as const } : m
-      ));
 
     } catch (error) {
       console.error('Error sending message:', error);

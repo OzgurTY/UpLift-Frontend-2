@@ -1,117 +1,108 @@
 'use client';
 
-import Pagination from '@/components/Pagination';
-import Table from '@/components/Table';
-import TableSearch from '@/components/TableSearch';
-import Image from 'next/image';
-import Link from 'next/link';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import Image     from 'next/image';
+import Link      from 'next/link';
 
-type Therapist = {
-  _id: string;
-  username: string;
-  email?: string;
-  specialization: string[];
-  languages: string[];
-  location: {
-    city: string;
-    country: string;
-  };
+import Pagination  from '@/components/Pagination';
+import Table       from '@/components/Table';
+import TableSearch from '@/components/TableSearch';
+
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+
+/* -------------------- types -------------------------------------- */
+type Location   = { city?:string; country?:string };
+type Therapist  = {
+  _id:           string;
+  username:      string;
+  email?:        string;
+  specialization:string[];
+  languages:     string[];
+  location?:     Location;
 };
+/* ----------------------------------------------------------------- */
 
 const columns = [
-  { header: 'Info', accessor: 'info' },
-  { header: 'Specialization', accessor: 'specialization', className: 'hidden md:table-cell' },
-  { header: 'Languages', accessor: 'languages', className: 'hidden lg:table-cell' },
-  { header: 'Location', accessor: 'location', className: 'hidden lg:table-cell' },
-  { header: 'Actions', accessor: 'action' }
+  { header:'INFO',           accessor:'info' },
+  { header:'SPECIALIZATION', accessor:'specialization', className:'hidden md:table-cell' },
+  { header:'LANGUAGES',      accessor:'languages',      className:'hidden lg:table-cell' },
+  { header:'LOCATION',       accessor:'location',       className:'hidden lg:table-cell' },
+  { header:'ACTIONS',        accessor:'actions' },
 ];
 
-const TherapistListPage = () => {
-  const [data, setData] = useState<Therapist[]>([]);
+export default function TherapistListPage() {
+  const [rows,    setRows]    = useState<Therapist[]>([]);
   const [loading, setLoading] = useState(true);
 
+  /* fetch once ------------------------------------------------------ */
   useEffect(() => {
-    const fetchTherapists = async () => {
-      try {
-        const res = await fetch('http://localhost:5001/api/therapists/list');
-        const therapists = await res.json();
-        setData(therapists);
-      } catch (error) {
-        console.error('Therapist fetch error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTherapists();
+    fetch(`${API}/api/therapists/list`)
+      .then(r => r.json())
+      .then(setRows)
+      .catch(console.error)
+      .finally(() => setLoading(false));
   }, []);
 
-  const renderRow = (item: Therapist) => (
-    <tr key={item._id} className='border-b border-x-gray-200 even:bg-slate-50 text-sm hover:bg-upliftPurpleLight'>
-      <td className='flex items-center gap-4 p-4'>
-        <Image
-          src="/default-profile.png"
-          alt=''
-          width={40}
-          height={40}
-          className='md:hidden xl:block w-10 h-10 rounded-full object-cover'
-        />
-        <div className='flex flex-col'>
-          <h3 className='font-semibold'>{item.username}</h3>
-          <p className='text-xs text-gray-500'>{item.email || 'noemail@uplift.com'}</p>
+  /* ---------------- row renderer ---------------------------------- */
+  const renderRow = (t:Therapist) => (
+    <tr key={t._id}
+        className="border-b even:bg-slate-50 text-sm hover:bg-upliftPurpleLight">
+      {/* -------- info ---------------------------------------------- */}
+      <td className="flex items-center gap-4 px-4 py-3">
+        <Image src="/default-avatar.png"
+               alt=""
+               width={40} height={40}
+               className="w-10 h-10 rounded-full object-cover" />
+        <div className="space-y-1">
+          <h3 className="font-semibold">{t.username || '—'}</h3>
+          <p  className="text-xs text-gray-500">
+            {t.email || 'noemail@uplift.com'}
+          </p>
         </div>
-      </td>
-      <td className='hidden md:table-cell'>{item.specialization.join(', ')}</td>
-      <td className='hidden lg:table-cell'>{item.languages.join(', ')}</td>
-      <td className='hidden lg:table-cell'>
-        {item.location?.city}, {item.location?.country}
       </td>
 
-      <td>
-        <div className='flex flex-row items-center gap-2'>
-          <Link href={`/list/therapists/${item._id}`}>
-            <button className='w-7 h-7 flex items-center justify-center rounded-full bg-upliftSky'>
-              <Image src="/view.png" alt='' width={16} height={16} />
-            </button>
-          </Link>
-        </div>
+      {/* -------- specialization ------------------------------------ */}
+      <td className="hidden md:table-cell px-4 py-3">
+        {(t.specialization ?? []).join(', ') || '—'}
+      </td>
+
+      {/* -------- languages ----------------------------------------- */}
+      <td className="hidden lg:table-cell px-4 py-3">
+        {(t.languages ?? []).join(', ') || '—'}
+      </td>
+
+      {/* -------- location ------------------------------------------ */}
+      <td className="hidden lg:table-cell px-4 py-3">
+        {t.location?.city || '—'}, {t.location?.country || '—'}
+      </td>
+
+      {/* -------- actions ------------------------------------------- */}
+      <td className="px-4 py-3">
+        <Link href={`/list/therapists/${t._id}`}>
+          <button className="w-7 h-7 flex items-center justify-center rounded-full bg-upliftSky">
+            <Image src="/view.png" alt="" width={16} height={16} />
+          </button>
+        </Link>
       </td>
     </tr>
   );
 
+  /* ---------------- render --------------------------------------- */
   return (
-    <div className='bg-white p-4 rounded-md flex-1 m-4 mt-0'>
-      {/* TOP */}
-      <div className='flex items-center justify-between'>
-        <h1 className='hidden md:block text-lg font-semibold'>All Therapists</h1>
-        <div className='flex flex-col md:flex-row items-center gap-4 w-full md:w-auto'>
-          <TableSearch />
-          <div className='flex items-center gap-4 self-end'>
-            <button className='w-8 h-8 flex items-center justify-center rounded-full bg-upliftYellow'>
-              <Image src="/filter.png" alt='' width={14} height={14} />
-            </button>
-            <button className='w-8 h-8 flex items-center justify-center rounded-full bg-upliftYellow'>
-              <Image src="/sort.png" alt='' width={14} height={14} />
-            </button>
-            <button className='w-8 h-8 flex items-center justify-center rounded-full bg-upliftYellow'>
-              <Image src="/plus.png" alt='' width={14} height={14} />
-            </button>
-          </div>
-        </div>
+    <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="hidden md:block text-lg font-semibold">
+          All Therapists
+        </h1>
+        <TableSearch />
       </div>
 
-      {/* LIST */}
-      {loading ? (
-        <div className="p-4 text-center">Loading...</div>
-      ) : (
-        <Table columns={columns} renderRow={renderRow} data={data} />
-      )}
+      {loading
+        ? <p className="p-4 text-center">Loading…</p>
+        : <Table columns={columns} data={rows} renderRow={renderRow} />
+      }
 
-      {/* PAGINATION */}
       <Pagination />
     </div>
   );
-};
-
-export default TherapistListPage;
+}

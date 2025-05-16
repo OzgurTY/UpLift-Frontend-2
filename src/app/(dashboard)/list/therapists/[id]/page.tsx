@@ -6,6 +6,7 @@ import Image from 'next/image';
 import RatingChart from '@/components/RatingChart';
 import Announcements from '@/components/Announcements';
 import BigCalendar from '@/components/BigCalendar';
+import TherapistRatings from '@/components/TherapistRatings'; // Import the new component
 
 type Therapist = {
   _id: string;
@@ -112,7 +113,8 @@ const TherapistDetailPage = () => {
 
       {/* RIGHT */}
       <div className="w-full xl:w-1/3 flex flex-col gap-4">
-        <RatingChart />
+        {/* Replace RatingChart with TherapistRatings */}
+        <TherapistRatings therapistId={therapistId} />
         <Announcements />
       </div>
     </div>

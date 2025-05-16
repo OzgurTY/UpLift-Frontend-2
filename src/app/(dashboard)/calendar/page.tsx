@@ -53,7 +53,7 @@ const CalendarPage = () => {
           ) : (
             <div className="h-[750px]">
               {role === 'patient' ? (
-                <CalendarForPatient patientId={userId || ''} />
+                <CalendarForPatient therapistId={userId || ''} />
               ) : (
                 <BigCalendar therapistId={userId || ''} />
               )}

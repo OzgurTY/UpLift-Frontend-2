@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import BecomeTherapistForm from './BecomeTherapistForm';
 
 interface UserData {
   id?: string;
@@ -74,7 +75,7 @@ const Settings = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'profile' | 'account' | 'notifications'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'account' | 'notifications' | 'therapist-application'>('profile');
   const [emailNotifications, setEmailNotifications] = useState<NotificationPreferences>({
     appointments: true,
     reminders: true,
@@ -269,7 +270,7 @@ const Settings = () => {
         )}
 
         {/* Tab Navigation */}
-        <div className="mb-6 flex border-b">
+        <div className="mb-6 flex border-b flex-wrap">
           <button 
             className={`py-2 px-4 mr-4 font-medium ${activeTab === 'profile' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-600'}`}
             onClick={() => setActiveTab('profile')}
@@ -288,6 +289,14 @@ const Settings = () => {
           >
             Notifications
           </button>
+          {user.role === 'patient' && (
+            <button 
+              className={`py-2 px-4 mr-4 font-medium ${activeTab === 'therapist-application' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-600'}`}
+              onClick={() => setActiveTab('therapist-application')}
+            >
+              Become a Therapist
+            </button>
+          )}
         </div>
 
         {/* Profile Tab */}
@@ -619,6 +628,11 @@ const Settings = () => {
               </button>
             </div>
           </div>
+        )}
+
+        {/* Become a Therapist Tab */}
+        {activeTab === 'therapist-application' && user.role === 'patient' && (
+          <BecomeTherapistForm />
         )}
       </div>
 

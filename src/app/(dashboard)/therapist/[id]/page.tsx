@@ -1,5 +1,5 @@
 import React from 'react';
-import TherapistProfile from '@/components/profiles/TherapistProfile';
+import TherapistProfile from '@/components/Profiles/TherapistProfile';
 import { useParams } from 'next/navigation';
 
 const TherapistProfilePage = () => {

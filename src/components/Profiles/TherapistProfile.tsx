@@ -670,15 +670,14 @@ const TherapistProfile: React.FC<{ userId: string }> = ({ userId }) => {
                   </div>
                   
                   {/* Review Samples */}
-                  <div className="space-y-4">
-                    {reviews.slice(0, 2).map((review) => (
-                      <div key={review.id} className="pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                  <div className="space-y-4">                      {reviews.slice(0, 2).map((review, reviewIndex) => (
+                      <div key={`review-${review.id}-${reviewIndex}`} className="pb-4 border-b border-gray-100 last:border-0 last:pb-0">
                         <div className="flex items-center justify-between mb-1">
                           <p className="font-medium text-gray-800">{review.patientName}</p>
                           <div className="flex items-center">
-                            {[1, 2, 3, 4, 5].map((star) => (
+                            {[1, 2, 3, 4, 5].map((star, starIndex) => (
                               <svg 
-                                key={star} 
+                                key={`star-${review.id}-${star}-${starIndex}`}
                                 className={`w-4 h-4 ${star <= review.rating ? 'text-yellow-400' : 'text-gray-300'}`} 
                                 fill="currentColor" 
                                 viewBox="0 0 20 20" 

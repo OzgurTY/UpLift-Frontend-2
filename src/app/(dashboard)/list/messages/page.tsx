@@ -127,10 +127,7 @@ export default function MessagesPage() {
 
   // Handle room joining and message events
   useEffect(() => {
-    if (!socketConnected || !socketRef.current || !sel || !sel._id) {
-      setWhoIsTyping([]); // Oda değiştiğinde typing durumunu sıfırla
-      return;
-    }
+    if (!socketConnected || !socketRef.current || !sel || !sel._id) return;
 
     console.log('Setting up message handlers for room:', sel._id);
     const currentSocket = socketRef.current;
@@ -139,7 +136,6 @@ export default function MessagesPage() {
     if (currentRoomRef.current && currentRoomRef.current !== sel._id) {
       console.log('Leaving previous room:', currentRoomRef.current);
       currentSocket.emit('leave', currentRoomRef.current);
-      setWhoIsTyping([]); // Oda değiştiğinde typing durumunu sıfırla
     }
 
     // Join new room if not already in it
@@ -157,35 +153,37 @@ export default function MessagesPage() {
         .then(r => r.json())
         .then(messages => {
           setMsgs(messages.map((m: Message) => ({ ...m, status: 'delivered' })));
-          setTimeout(() => {
-            bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-          }, 100);
+          bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
         })
         .catch(console.error);
-    }    const handleNewMessage = (message: Message) => {
+    }
+
+    const handleNewMessage = (message: Message) => {
       console.log('New message received:', message);
       
       setMsgs(prev => {
-        // Check for duplicates by message ID or temp ID match
-        const existingMessage = prev.find(m => 
-          m._id === message._id || 
-          (m.status === 'sending' && m.text === message.text &&
-           (typeof m.sender === 'string' ? 
-             m.sender === message.sender : 
-             m.sender._id === message.sender))
-        );
-
-        if (existingMessage) {
-          // Update status of existing message
-          return prev.map(m => 
-            m === existingMessage ? 
-              { ...message, status: 'delivered' as const } : 
-              m
-          );
+        // Check for duplicates
+        if (prev.some(m => m._id === message._id)) {
+          return prev;
         }
 
-        // Add new message
-        const newMsg = { ...message, status: 'delivered' as const };
+        // Update temp message if exists
+        const tempIndex = prev.findIndex(m => 
+          m.text === message.text && 
+          m.sender === message.sender && 
+          m.status === 'sending'
+        );
+        
+        if (tempIndex >= 0) {
+          const newMsgs = [...prev];
+          newMsgs[tempIndex] = { ...message, status: 'delivered' as const };
+          return newMsgs;
+        }
+
+        const newMsg: Message = { 
+          ...message, 
+          status: 'delivered' as const 
+        };
         
         // Send received confirmation for messages from others
         if (typeof message.sender === 'string' ? 
@@ -200,21 +198,7 @@ export default function MessagesPage() {
         return [...prev, newMsg];
       });
 
-      // Remove typing indicator when message is received
-      if (typeof message.sender === 'string' ? 
-          message.sender !== userId : 
-          message.sender._id !== userId) {
-        setWhoIsTyping(prev => {
-          const senderUsername = typeof message.sender === 'string' ? 
-            message.sender : 
-            message.sender.username;
-          return prev.filter(name => name !== senderUsername);
-        });
-      }
-
-      setTimeout(() => {
-        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
     const handleMessageStatus = (update: MessageUpdate) => {
@@ -250,9 +234,8 @@ export default function MessagesPage() {
       currentSocket.off('new-message', handleNewMessage);
       currentSocket.off('message-status', handleMessageStatus);
       currentSocket.off('typing', handleTypingIndicator);
-      setWhoIsTyping([]); // Cleanup'ta typing durumunu sıfırla
     };
-  }, [sel?._id, socketConnected, token, userId]);
+  }, [sel, socketConnected, token, userId]);
 
   // Handle typing indicator
   const handleTyping = (value: string) => {
@@ -323,13 +306,35 @@ export default function MessagesPage() {
     };
 
     setMsgs(prev => [...prev, tempMessage]);
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });    try {
-      // Only emit to socket for delivery - backend will handle persistence
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+
+    try {
+      // Emit to socket first for immediate delivery
       currentSocket.emit('send-message', {
         conversationId: sel._id,
         text: messageText,
         tempId
       });
+
+      // Save to database
+      const response = await fetch(`${API}/api/chat/${sel._id}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ text: messageText })
+      });
+
+      if (!response.ok) throw new Error('Failed to send message');
+
+      const savedMessage: Message = await response.json();
+      console.log('Message saved:', savedMessage);
+
+      // Update temp message with saved data
+      setMsgs(prev => prev.map(m => 
+        m._id === tempId ? { ...savedMessage, status: 'sent' as const } : m
+      ));
 
     } catch (error) {
       console.error('Error sending message:', error);

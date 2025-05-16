@@ -2,10 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import BigCalendar from '@/components/BigCalendar';
+import CalendarForPatient from '@/components/CalendarForPatient';
 import Announcements from '@/components/Announcements';
 
 const CalendarPage = () => {
-  const [userId, setUserId] = useState<string | null>(null);
+  const [userId, setUserId] = useState(null);
+  const [role, setRole] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,13 +21,14 @@ const CalendarPage = () => {
 
         const response = await fetch('http://localhost:5001/api/users/me', {
           headers: {
-            'Authorization': `Bearer ${token}`
+            Authorization: `Bearer ${token}`
           }
         });
 
         if (response.ok) {
           const userData = await response.json();
           setUserId(userData.id);
+          setRole(userData.role);
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -49,12 +52,16 @@ const CalendarPage = () => {
             </div>
           ) : (
             <div className="h-[750px]">
-              <BigCalendar therapistId={userId || ''} />
+              {role === 'patient' ? (
+                <CalendarForPatient patientId={userId || ''} />
+              ) : (
+                <BigCalendar therapistId={userId || ''} />
+              )}
             </div>
           )}
         </div>
       </div>
-      
+
       {/* RIGHT - Sidebar */}
       <div className='w-full xl:w-1/3 flex flex-col gap-8'>
         <div className="bg-white p-4 rounded-md">
@@ -68,7 +75,7 @@ const CalendarPage = () => {
               <p className="text-sm text-gray-600">Session with Dr. Emma Wilson</p>
               <p className="text-xs text-gray-500 mt-1">Tomorrow</p>
             </div>
-            
+
             <div className="p-3 border rounded-md bg-upliftPurpleLight">
               <div className="flex justify-between items-center mb-1">
                 <h3 className="font-medium">Group Therapy</h3>
@@ -77,7 +84,7 @@ const CalendarPage = () => {
               <p className="text-sm text-gray-600">Anxiety Management Group</p>
               <p className="text-xs text-gray-500 mt-1">May 18, 2025</p>
             </div>
-            
+
             <div className="p-3 border rounded-md bg-upliftYellowLight">
               <div className="flex justify-between items-center mb-1">
                 <h3 className="font-medium">Wellness Check-in</h3>
@@ -88,7 +95,7 @@ const CalendarPage = () => {
             </div>
           </div>
         </div>
-        
+
         <Announcements />
       </div>
     </div>

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Pagination from '@/components/Pagination';
 import Table from '@/components/Table';
 import TableSearch from '@/components/TableSearch';
+import AppointmentDetailModal from '@/components/AppointmentDetailModal';
 
 type Appointment = {
   _id: string;
@@ -42,15 +43,14 @@ const AppointmentsListPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     fetchAppointments();
-    
-    // Update current time every minute
     const intervalId = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000);
-    
     return () => clearInterval(intervalId);
   }, []);
 
@@ -94,18 +94,12 @@ const AppointmentsListPage = () => {
     const appointmentDate = new Date(appointment.slot.date);
     const startTime = appointment.slot.startTime.split(':');
     appointmentDate.setHours(parseInt(startTime[0]), parseInt(startTime[1]));
-    
-    // Calculate time difference in minutes
     const timeDiffInMinutes = (appointmentDate.getTime() - currentTime.getTime()) / (1000 * 60);
-    
-    // Return true if the meeting is starting in less than 5 minutes but hasn't started yet
-    return timeDiffInMinutes <= 5 && timeDiffInMinutes > -60; // Allow joining up to 60 minutes after start time
+    return timeDiffInMinutes <= 5 && timeDiffInMinutes > -60;
   };
 
   const startMeeting = (jitsiRoom: string) => {
     if (!jitsiRoom) return;
-    
-    // Open Jitsi meeting in a new tab
     window.open(`https://meet.jit.si/${jitsiRoom}`, '_blank');
   };
 
@@ -155,7 +149,13 @@ const AppointmentsListPage = () => {
               Start Meeting
             </button>
           )}
-          <button className='w-7 h-7 flex items-center justify-center rounded-full bg-upliftSky'>
+          <button
+            onClick={() => {
+              setSelectedAppointment(appointment);
+              setIsModalOpen(true);
+            }}
+            className='w-7 h-7 flex items-center justify-center rounded-full bg-upliftSky'
+          >
             <Image src="/view.png" alt='' width={16} height={16} />
           </button>
         </div>
@@ -208,7 +208,6 @@ const AppointmentsListPage = () => {
 
   return (
     <div className='bg-white p-4 rounded-md flex-1 m-4 mt-0'>
-      {/** TOP */}
       <div className='flex items-center justify-between mb-6'>
         <h1 className='text-lg font-semibold'>My Appointments</h1>
         <div className='flex flex-col md:flex-row items-center gap-4 w-full md:w-auto'>
@@ -224,7 +223,6 @@ const AppointmentsListPage = () => {
         </div>
       </div>
 
-      {/** PAID APPOINTMENTS */}
       <div className='mb-8'>
         <h2 className='text-md font-semibold mb-4 text-gray-700 flex items-center'>
           <div className='w-3 h-3 bg-green-500 rounded-full mr-2'></div>
@@ -243,7 +241,6 @@ const AppointmentsListPage = () => {
         )}
       </div>
 
-      {/** UNPAID APPOINTMENTS */}
       <div>
         <h2 className='text-md font-semibold mb-4 text-gray-700 flex items-center'>
           <div className='w-3 h-3 bg-yellow-500 rounded-full mr-2'></div>
@@ -262,8 +259,13 @@ const AppointmentsListPage = () => {
         )}
       </div>
 
-      {/** PAGINATION */}
       <Pagination />
+
+      <AppointmentDetailModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        appointment={selectedAppointment}
+      />
     </div>
   );
 };
